@@ -72,83 +72,81 @@ def run_script():
 
     time.sleep(10)
     driver.quit()
-    combined_rows = []
-    #filename = 'insert file name here'
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    download_dir = os.path.join(base_dir, "csv_downloads")
-
-    # build full path to your file
-    file_name = os.path.join(download_dir,f'pageviews-20150701-{yesterday_str}.csv')
-    with open(file_name) as csvfile:
-        reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
-        counter = 0
-        for row in reader:
-            print(row)
-            splitrow = row[0].split(',')
-            if counter >= 1:
-                splitrow[1] = int(splitrow[1])
-            combined_rows.append(splitrow)
-            print(splitrow)
-            counter += 1
-    arranged = sorted(combined_rows[1:], key=lambda x: x[1])
-    counter = 0
-    total = 0
-    for row in arranged:
-        total += row[1]
-        counter += 1
-    mean = int((total / counter + 1) // 1)
-    median = arranged[len(arranged) // 2][1]
-    relative_values = []
-    i = 1
-    pair = []
-    sum = 0
-    for row in combined_rows[1:]:
-        if i == 1:
-            pair.append(row[0])
-            print(pair)
-        sum += row[1]
-        if i == 7:
-            pair.append(sum / 7)
-            relative_values.append(pair)
-            pair = []
-            i = 0
-            sum = 0
-        i += 1
-    print(mean)
-    dates = []
-    values = []
-    counter = 0
-    month_list = []
-    for row in relative_values:
-        if row[0][5:7] not in month_list:
-            month_list.append(row[0][5:7])
-            dates.append(row[0])
-        else:
-            dates.append(' ' * counter)
-        values.append(row[1])
-        counter += 1
-    plt.plot(dates, values)
-    plt.tick_params(axis='x', labelrotation=90)
-    plt.show()
-    print(mean)
-    print(median)
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # wiki/
-    weekly_dir = os.path.join(base_dir, "weekly_data")
-    os.makedirs(weekly_dir, exist_ok=True)
-
-    # Date-stamped filename to keep history
-    weekly_csv = os.path.join(weekly_dir, f"weekly_data_{yesterday_str}.csv")
-    if os.path.exists(weekly_csv):
-        os.remove(weekly_csv)
-    with open(weekly_csv, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Week", "Average Page Visits per Day"])
-        writer.writerows(relative_values)
-
-    print(f"Wrote: {weekly_csv}")
-
-
 
 if __name__ == '__main__':
     run_script()
 
+combined_rows = []
+#filename = 'insert file name here'
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+download_dir = os.path.join(base_dir, "csv_downloads")
+
+# build full path to your file
+file_name = os.path.join(download_dir,f'pageviews-20150701-{yesterday_str}.csv')
+with open(file_name) as csvfile:
+    reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+    counter = 0
+    for row in reader:
+        print(row)
+        splitrow = row[0].split(',')
+        if counter >= 1:
+            splitrow[1] = int(splitrow[1])
+        combined_rows.append(splitrow)
+        print(splitrow)
+        counter += 1
+arranged = sorted(combined_rows[1:], key=lambda x: x[1])
+counter = 0
+total = 0
+for row in arranged:
+    total += row[1]
+    counter += 1
+mean = int((total / counter + 1) // 1)
+median = arranged[len(arranged) // 2][1]
+relative_values = []
+i = 1
+pair = []
+sum = 0
+for row in combined_rows[1:]:
+    if i == 1:
+        pair.append(row[0])
+        print(pair)
+    sum += row[1]
+    if i == 7:
+        pair.append(sum / 7)
+        relative_values.append(pair)
+        pair = []
+        i = 0
+        sum = 0
+    i += 1
+print(mean)
+dates = []
+values = []
+counter = 0
+month_list = []
+for row in relative_values:
+    if row[0][5:7] not in month_list:
+        month_list.append(row[0][5:7])
+        dates.append(row[0])
+    else:
+        dates.append(' ' * counter)
+    values.append(row[1])
+    counter += 1
+plt.plot(dates, values)
+plt.tick_params(axis='x', labelrotation=90)
+plt.show()
+print(mean)
+print(median)
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # wiki/
+weekly_dir = os.path.join(base_dir, "weekly_data")
+os.makedirs(weekly_dir, exist_ok=True)
+
+# Date-stamped filename to keep history
+weekly_csv = os.path.join(weekly_dir, f"weekly_data_{yesterday_str}.csv")
+if os.path.exists(weekly_csv):
+    os.remove(weekly_csv)
+with open(weekly_csv, "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["Week", "Average Page Visits per Day"])
+    writer.writerows(relative_values)
+
+print(f"Wrote: {weekly_csv}")
