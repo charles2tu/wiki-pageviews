@@ -1,0 +1,64 @@
+name: Weekly Pageviews (Wed 10am ET)
+
+on:
+  workflow_dispatch:            # allow manual runs
+  schedule:
+    - cron: "0 * * * 3"         # run hourly on Wednesdays (UTC); we'll gate to 10am ET
+
+permissions:
+  contents: write               # allow pushing results back to the repo
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: "1"
+      MPLBACKEND: "Agg"         # headless plotting
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium matplotlib
+
+      - name: Gate to Wed 10:00 AM America/New_York
+        id: gate
+        run: |
+          python - <<'PY'
+          import os
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          now = datetime.now(ZoneInfo("America/New_York"))
+          should = (now.weekday() == 2) and (now.hour == 10)  # Wed==2
+          print("NY time:", now.isoformat(), "should_run:", should)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"should_run={'true' if should else 'false'}\n")
+          PY
+
+      - name: Run script
+        if: steps.gate.outputs.should_run == 'true'
+        run: |
+          python wiki/scripts/your_script.py   # <-- adjust path if different
+
+      - name: Commit & push results
+        if: steps.gate.outputs.should_run == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add wiki/csv_downloads wiki/weekly_data || true
+          git commit -m "Automated pageviews update (NY 10am)" || echo "No changes to commit"
+          git push
